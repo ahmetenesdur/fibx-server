@@ -36,14 +36,6 @@ pnpm dev
 | `JWT_SECRET`       | Yes      | Secret for signing session JWTs |
 | `PORT`             | No       | Server port (default: 3001)     |
 
-## Deployment
-
-```bash
-vercel deploy
-```
-
-Set `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `JWT_SECRET`, and `NODE_ENV=production` in the Vercel dashboard.
-
 ## Security
 
 - All wallet/signing endpoints require a valid JWT
