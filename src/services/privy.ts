@@ -190,7 +190,6 @@ export async function signTypedData(
 ): Promise<{ signature: string }> {
 	const privy = getPrivyClient();
 	try {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const rpcInput = {
 			params: {
 				typed_data: typedData as any,

@@ -1,4 +1,4 @@
-import { Context, Next } from "hono";
+import type { Context, Next } from "hono";
 import * as jose from "jose";
 import { ApiError } from "../lib/errors.js";
 

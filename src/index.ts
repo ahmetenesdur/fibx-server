@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { bodyLimit } from "hono/body-limit";
-import { errorResponse, ApiError } from "./lib/errors.js";
+import { errorResponse } from "./lib/errors.js";
 import authRoutes from "./routes/auth.js";
 import walletRoutes from "./routes/wallet.js";
 import signRoutes from "./routes/sign.js";
