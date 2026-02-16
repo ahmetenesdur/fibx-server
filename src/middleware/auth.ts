@@ -17,11 +17,7 @@ function getJwtSecret(): Uint8Array {
 		throw new ApiError(500, "JWT_SECRET must be set", "CONFIG_ERROR");
 	}
 	if (secret.length < 32) {
-		throw new ApiError(
-			500,
-			"JWT_SECRET must be at least 32 characters",
-			"CONFIG_ERROR",
-		);
+		throw new ApiError(500, "JWT_SECRET must be at least 32 characters", "CONFIG_ERROR");
 	}
 	return new TextEncoder().encode(secret);
 }
@@ -47,7 +43,6 @@ export async function verifyToken(token: string): Promise<JwtPayload> {
 			audience: JWT_AUDIENCE,
 		});
 
-		// Validate required claims exist and are proper strings
 		const userId = payload.userId;
 		const walletId = payload.walletId;
 		const walletAddress = payload.walletAddress;
@@ -60,19 +55,14 @@ export async function verifyToken(token: string): Promise<JwtPayload> {
 			!walletId ||
 			!walletAddress
 		) {
-			throw new ApiError(
-				401,
-				"Token contains invalid claims",
-				"INVALID_TOKEN_CLAIMS",
-			);
+			throw new ApiError(401, "Token contains invalid claims", "INVALID_TOKEN_CLAIMS");
 		}
 
-		// Validate wallet address format
 		if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
 			throw new ApiError(
 				401,
 				"Token contains invalid wallet address",
-				"INVALID_TOKEN_CLAIMS",
+				"INVALID_TOKEN_CLAIMS"
 			);
 		}
 
@@ -83,19 +73,11 @@ export async function verifyToken(token: string): Promise<JwtPayload> {
 	}
 }
 
-/**
- * Hono middleware: extracts and validates Bearer JWT,
- * attaches decoded payload to `c.set("jwtPayload", ...)`.
- */
 export async function authMiddleware(c: Context, next: Next) {
 	const authHeader = c.req.header("Authorization");
 
 	if (!authHeader?.startsWith("Bearer ")) {
-		throw new ApiError(
-			401,
-			"Missing or invalid Authorization header",
-			"UNAUTHORIZED",
-		);
+		throw new ApiError(401, "Missing or invalid Authorization header", "UNAUTHORIZED");
 	}
 
 	const token = authHeader.slice(7);
@@ -110,18 +92,10 @@ export async function authMiddleware(c: Context, next: Next) {
 	await next();
 }
 
-/**
- * Guard: ensures the requested walletId matches the authenticated user's wallet.
- * Call AFTER authMiddleware.
- */
 export function requireWalletOwnership(c: Context, requestedWalletId: string) {
 	const payload = c.get("jwtPayload") as JwtPayload;
 
 	if (!requestedWalletId || payload.walletId !== requestedWalletId) {
-		throw new ApiError(
-			403,
-			"You can only sign with your own wallet",
-			"WALLET_MISMATCH",
-		);
+		throw new ApiError(403, "You can only sign with your own wallet", "WALLET_MISMATCH");
 	}
 }

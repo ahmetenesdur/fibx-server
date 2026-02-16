@@ -2,7 +2,7 @@ export class ApiError extends Error {
 	constructor(
 		public readonly statusCode: number,
 		message: string,
-		public readonly code?: string,
+		public readonly code?: string
 	) {
 		super(message);
 		this.name = "ApiError";
@@ -22,10 +22,8 @@ export function errorResponse(error: unknown) {
 		};
 	}
 
-	// Log internal errors server-side for debugging
 	console.error("[INTERNAL_ERROR]", error);
 
-	// Never leak internal error details in production
 	const message =
 		process.env.NODE_ENV === "production"
 			? "Internal server error"
