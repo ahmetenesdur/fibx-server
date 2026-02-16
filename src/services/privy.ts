@@ -1,37 +1,29 @@
 import { PrivyClient } from "@privy-io/node";
 import { ApiError } from "../lib/errors.js";
+import { config } from "../lib/config.js";
 
 let privyInstance: PrivyClient | null = null;
-
-function getPrivyCredentials(): { appId: string; appSecret: string } {
-	const appId = process.env.PRIVY_APP_ID;
-	const appSecret = process.env.PRIVY_APP_SECRET;
-
-	if (!appId || !appSecret) {
-		throw new ApiError(500, "PRIVY_APP_ID and PRIVY_APP_SECRET must be set", "CONFIG_ERROR");
-	}
-
-	return { appId, appSecret };
-}
 
 export function getPrivyClient(): PrivyClient {
 	if (privyInstance) return privyInstance;
 
-	const { appId, appSecret } = getPrivyCredentials();
-	privyInstance = new PrivyClient({ appId, appSecret });
+	privyInstance = new PrivyClient({
+		appId: config.PRIVY_APP_ID,
+		appSecret: config.PRIVY_APP_SECRET,
+	});
 	return privyInstance;
 }
 
 export async function sendOtp(email: string): Promise<void> {
-	const { appId, appSecret } = getPrivyCredentials();
-	const credentials = Buffer.from(`${appId}:${appSecret}`).toString("base64");
+	const { PRIVY_APP_ID, PRIVY_APP_SECRET } = config;
+	const credentials = Buffer.from(`${PRIVY_APP_ID}:${PRIVY_APP_SECRET}`).toString("base64");
 
 	const res = await fetch("https://auth.privy.io/api/v1/passwordless/init", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
 			Authorization: `Basic ${credentials}`,
-			"privy-app-id": appId,
+			"privy-app-id": PRIVY_APP_ID,
 		},
 		body: JSON.stringify({ email }),
 	});
@@ -47,15 +39,15 @@ export async function verifyOtp(
 	email: string,
 	code: string
 ): Promise<{ userId: string; userToken: string }> {
-	const { appId, appSecret } = getPrivyCredentials();
-	const credentials = Buffer.from(`${appId}:${appSecret}`).toString("base64");
+	const { PRIVY_APP_ID, PRIVY_APP_SECRET } = config;
+	const credentials = Buffer.from(`${PRIVY_APP_ID}:${PRIVY_APP_SECRET}`).toString("base64");
 
 	const res = await fetch("https://auth.privy.io/api/v1/passwordless/authenticate", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
 			Authorization: `Basic ${credentials}`,
-			"privy-app-id": appId,
+			"privy-app-id": PRIVY_APP_ID,
 		},
 		body: JSON.stringify({ email, code }),
 	});

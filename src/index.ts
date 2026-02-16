@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { bodyLimit } from "hono/body-limit";
+import { secureHeaders } from "hono/secure-headers";
+import { requestId } from "hono/request-id";
 import { errorResponse } from "./lib/errors.js";
 import authRoutes from "./routes/auth.js";
 import walletRoutes from "./routes/wallet.js";
@@ -9,8 +11,9 @@ import signRoutes from "./routes/sign.js";
 
 const app = new Hono();
 
+app.use("*", requestId());
 app.use("*", logger());
-
+app.use("*", secureHeaders());
 app.use("*", bodyLimit({ maxSize: 1024 * 1024 }));
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS

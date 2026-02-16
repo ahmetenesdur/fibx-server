@@ -2,6 +2,8 @@ import type { Context, Next } from "hono";
 import * as jose from "jose";
 import { ApiError } from "../lib/errors.js";
 
+import { config } from "../lib/config.js";
+
 export interface JwtPayload {
 	userId: string;
 	walletId: string;
@@ -12,14 +14,7 @@ const JWT_ISSUER = "fibx-server";
 const JWT_AUDIENCE = "fibx-cli";
 
 function getJwtSecret(): Uint8Array {
-	const secret = process.env.JWT_SECRET;
-	if (!secret) {
-		throw new ApiError(500, "JWT_SECRET must be set", "CONFIG_ERROR");
-	}
-	if (secret.length < 32) {
-		throw new ApiError(500, "JWT_SECRET must be at least 32 characters", "CONFIG_ERROR");
-	}
-	return new TextEncoder().encode(secret);
+	return new TextEncoder().encode(config.JWT_SECRET);
 }
 
 export async function generateToken(payload: JwtPayload): Promise<string> {
