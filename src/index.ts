@@ -11,35 +11,27 @@ import signRoutes from "./routes/sign.js";
 
 const app = new Hono();
 
-app.use("*", async (c, next) => {
-	console.log(`[TRACE] Incoming request: ${c.req.method} ${c.req.path}`);
-	try {
-		await next();
-		console.log(`[TRACE] Completed request: ${c.req.method} ${c.req.path}`);
-	} catch (e) {
-		console.error(`[TRACE] Request failed:`, e);
-		throw e;
-	}
-});
-
 app.use("*", requestId());
 app.use("*", logger());
-// app.use("*", bodyLimit({ maxSize: 1024 * 1024 })); // Temporarily disabled for debugging
-// app.use("*", secureHeaders()); // Temporarily disabled
+app.use("*", secureHeaders());
+app.use("*", bodyLimit({ maxSize: 1024 * 1024 }));
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+	? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+	: [];
 
 app.use(
 	"*",
 	cors({
-		origin: "*", // Force allow all for debugging
+		origin: (origin) => {
+			if (!origin) return "*";
+			if (allowedOrigins.includes(origin)) return origin;
+			return "";
+		},
 		allowMethods: ["GET", "POST", "OPTIONS"],
 		allowHeaders: ["Content-Type", "Authorization"],
 	})
 );
-
-app.use("*", async (c, next) => {
-	console.log("[DEBUG] Passed global middleware, entering routes");
-	await next();
-});
 
 app.route("/auth", authRoutes);
 app.route("/wallet", walletRoutes);
@@ -79,17 +71,13 @@ const port = Number(process.env.PORT) || 3001;
 // Export the Hono app for serverless environments (Vercel, Cloudflare, etc.)
 export default app;
 
-console.log("[FIBX] src/index.ts loaded");
-
 // explicit start for standalone environments (Docker, VPS) or Development
 // If NODE_ENV is not set, we assume development/local usage and run the server.
 if (
-	process.env.VERCEL !== "1" &&
-	(!process.env.NODE_ENV ||
-		process.env.NODE_ENV === "production" ||
-		process.env.NODE_ENV === "development")
+	!process.env.NODE_ENV ||
+	process.env.NODE_ENV === "production" ||
+	process.env.NODE_ENV === "development"
 ) {
-	console.log("[FIBX] Starting standalone server via @hono/node-server");
 	const { serve } = await import("@hono/node-server");
 
 	serve({ fetch: app.fetch, port }, (info) => {

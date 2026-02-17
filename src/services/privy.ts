@@ -18,7 +18,6 @@ export async function sendOtp(email: string): Promise<void> {
 	const { PRIVY_APP_ID, PRIVY_APP_SECRET } = config;
 	const credentials = Buffer.from(`${PRIVY_APP_ID}:${PRIVY_APP_SECRET}`).toString("base64");
 
-	console.log("[PRIVY] Sending OTP to:", email);
 	const res = await fetch("https://auth.privy.io/api/v1/passwordless/init", {
 		method: "POST",
 		headers: {
@@ -28,7 +27,6 @@ export async function sendOtp(email: string): Promise<void> {
 		},
 		body: JSON.stringify({ email }),
 	});
-	console.log("[PRIVY] OTP Init response status:", res.status);
 
 	if (!res.ok) {
 		const body = await res.text().catch(() => "");
