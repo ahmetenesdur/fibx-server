@@ -24,25 +24,22 @@ app.use("*", async (c, next) => {
 
 app.use("*", requestId());
 app.use("*", logger());
-app.use("*", secureHeaders());
-app.use("*", bodyLimit({ maxSize: 1024 * 1024 }));
-
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-	? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
-	: [];
+// app.use("*", bodyLimit({ maxSize: 1024 * 1024 })); // Temporarily disabled for debugging
+// app.use("*", secureHeaders()); // Temporarily disabled
 
 app.use(
 	"*",
 	cors({
-		origin: (origin) => {
-			if (!origin) return "*";
-			if (allowedOrigins.includes(origin)) return origin;
-			return "";
-		},
+		origin: "*", // Force allow all for debugging
 		allowMethods: ["GET", "POST", "OPTIONS"],
 		allowHeaders: ["Content-Type", "Authorization"],
 	})
 );
+
+app.use("*", async (c, next) => {
+	console.log("[DEBUG] Passed global middleware, entering routes");
+	await next();
+});
 
 app.route("/auth", authRoutes);
 app.route("/wallet", walletRoutes);
