@@ -11,6 +11,17 @@ import signRoutes from "./routes/sign.js";
 
 const app = new Hono();
 
+app.use("*", async (c, next) => {
+	console.log(`[TRACE] Incoming request: ${c.req.method} ${c.req.path}`);
+	try {
+		await next();
+		console.log(`[TRACE] Completed request: ${c.req.method} ${c.req.path}`);
+	} catch (e) {
+		console.error(`[TRACE] Request failed:`, e);
+		throw e;
+	}
+});
+
 app.use("*", requestId());
 app.use("*", logger());
 app.use("*", secureHeaders());
