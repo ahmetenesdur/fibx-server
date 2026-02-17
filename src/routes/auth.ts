@@ -17,7 +17,9 @@ const auth = new Hono();
 const authRateLimit = rateLimit({ maxRequests: 5, windowMs: 60_000 });
 
 auth.post("/login", authRateLimit, zValidator("json", loginSchema), async (c) => {
+	console.log("[AUTH] /login request received");
 	const { email } = c.req.valid("json");
+	console.log(`[AUTH] Processing login for: ${email}`);
 
 	await sendOtp(email);
 
