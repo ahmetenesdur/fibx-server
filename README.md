@@ -2,10 +2,6 @@
 
 Backend for the [fibx](https://github.com/ahmetenesdur/fibx) CLI. Proxies all Privy operations (OTP auth, wallet management, transaction signing) so the CLI never touches Privy credentials.
 
-```
-CLI (fibx)  →  fibx-server  →  Privy API
-```
-
 ## API
 
 | Method | Endpoint            | Auth       | Description                              |
