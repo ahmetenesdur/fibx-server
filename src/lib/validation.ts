@@ -45,9 +45,16 @@ export async function validateBody<T extends z.ZodSchema>(
 ): Promise<z.infer<T>> {
 	let body: unknown;
 	try {
-		body = await c.req.json();
-	} catch {
-		throw new ApiError(400, "Invalid or missing JSON body", "INVALID_JSON");
+		console.log("[DEBUG] Reading body. Content-Length:", c.req.header("content-length"));
+		console.log("[DEBUG] Content-Type:", c.req.header("content-type"));
+
+		const timeout = new Promise((_, reject) =>
+			setTimeout(() => reject(new Error("Body read timeout")), 2000)
+		);
+		body = await Promise.race([c.req.json(), timeout]);
+	} catch (e: any) {
+		console.error("[DEBUG] Body parsing failed:", e);
+		throw new ApiError(400, `Invalid or missing JSON body (${e.message})`, "INVALID_JSON");
 	}
 
 	const parsed = schema.safeParse(body);
