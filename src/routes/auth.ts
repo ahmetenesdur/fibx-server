@@ -16,14 +16,24 @@ const auth = new Hono();
 const authRateLimit = rateLimit({ maxRequests: 5, windowMs: 60_000 });
 
 auth.post("/login", authRateLimit, async (c) => {
-	const { email } = await validateBody(c, loginSchema);
+	console.log("[DEBUG] /auth/login hit");
+	try {
+		console.log("[DEBUG] Validating body...");
+		const { email } = await validateBody(c, loginSchema);
+		console.log("[DEBUG] Body validated, email:", email);
 
-	await sendOtp(email);
+		console.log("[DEBUG] Sending OTP...");
+		await sendOtp(email);
+		console.log("[DEBUG] OTP sent successfully");
 
-	return c.json({
-		success: true,
-		message: "OTP sent successfully",
-	});
+		return c.json({
+			success: true,
+			message: "OTP sent successfully",
+		});
+	} catch (error) {
+		console.error("[DEBUG] /auth/login error:", error);
+		throw error;
+	}
 });
 
 auth.post("/verify", authRateLimit, async (c) => {

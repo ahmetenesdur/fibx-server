@@ -15,9 +15,13 @@ export function getPrivyClient(): PrivyClient {
 }
 
 export async function sendOtp(email: string): Promise<void> {
+	console.log("[DEBUG] sendOtp called for:", email);
 	const { PRIVY_APP_ID, PRIVY_APP_SECRET } = config;
+	console.log("[DEBUG] Config loaded. App ID present:", !!PRIVY_APP_ID);
+
 	const credentials = Buffer.from(`${PRIVY_APP_ID}:${PRIVY_APP_SECRET}`).toString("base64");
 
+	console.log("[DEBUG] Fetching Privy API...");
 	const res = await fetch("https://auth.privy.io/api/v1/passwordless/init", {
 		method: "POST",
 		headers: {
@@ -27,6 +31,7 @@ export async function sendOtp(email: string): Promise<void> {
 		},
 		body: JSON.stringify({ email }),
 	});
+	console.log("[DEBUG] Privy API response status:", res.status);
 
 	if (!res.ok) {
 		const body = await res.text().catch(() => "");
