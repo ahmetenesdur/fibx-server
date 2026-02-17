@@ -45,28 +45,16 @@ export async function validateBody<T extends z.ZodSchema>(
 ): Promise<z.infer<T>> {
 	let body: unknown;
 	try {
-		console.log("[DEBUG] Inspecting request...");
-
-		// Check if raw request (web standard) has a non-standard 'body' property where Vercel might have attached parsed data
-		if ((c.req.raw as any).body) {
-			console.log("[DEBUG] (c.req.raw as any).body exists:", typeof (c.req.raw as any).body);
+		const rawReq = c.req.raw as any;
+		if (rawReq.body) {
+			body = rawReq.body;
+		} else {
+			body = await c.req.json();
 		}
-
-		// Check environment object for Vercel context
-		if (c.env && (c.env as any).body) {
-			console.log("[DEBUG] c.env.body exists");
-		}
-
-		console.log("[DEBUG] Reading body. Content-Length:", c.req.header("content-length"));
-		console.log("[DEBUG] Content-Type:", c.req.header("content-type"));
-
-		const timeout = new Promise((_, reject) =>
-			setTimeout(() => reject(new Error("Body read timeout")), 2000)
-		);
-		body = await Promise.race([c.req.json(), timeout]);
 	} catch (e: unknown) {
 		const errorMessage = e instanceof Error ? e.message : String(e);
-		console.error("[DEBUG] Body parsing failed:", e);
+		// Only log validation/parsing errors, not debug info
+		console.error("[ERROR] Body parsing failed:", e);
 		throw new ApiError(400, `Invalid or missing JSON body (${errorMessage})`, "INVALID_JSON");
 	}
 
