@@ -45,6 +45,18 @@ export async function validateBody<T extends z.ZodSchema>(
 ): Promise<z.infer<T>> {
 	let body: unknown;
 	try {
+		console.log("[DEBUG] Inspecting request...");
+
+		// Check if raw request (web standard) has a non-standard 'body' property where Vercel might have attached parsed data
+		if ((c.req.raw as any).body) {
+			console.log("[DEBUG] (c.req.raw as any).body exists:", typeof (c.req.raw as any).body);
+		}
+
+		// Check environment object for Vercel context
+		if (c.env && (c.env as any).body) {
+			console.log("[DEBUG] c.env.body exists");
+		}
+
 		console.log("[DEBUG] Reading body. Content-Length:", c.req.header("content-length"));
 		console.log("[DEBUG] Content-Type:", c.req.header("content-type"));
 
@@ -52,9 +64,10 @@ export async function validateBody<T extends z.ZodSchema>(
 			setTimeout(() => reject(new Error("Body read timeout")), 2000)
 		);
 		body = await Promise.race([c.req.json(), timeout]);
-	} catch (e: any) {
+	} catch (e: unknown) {
+		const errorMessage = e instanceof Error ? e.message : String(e);
 		console.error("[DEBUG] Body parsing failed:", e);
-		throw new ApiError(400, `Invalid or missing JSON body (${e.message})`, "INVALID_JSON");
+		throw new ApiError(400, `Invalid or missing JSON body (${errorMessage})`, "INVALID_JSON");
 	}
 
 	const parsed = schema.safeParse(body);

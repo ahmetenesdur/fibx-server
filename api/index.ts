@@ -3,9 +3,6 @@ import app from "../src/index.js";
 
 export const config = {
 	runtime: "nodejs",
-	api: {
-		bodyParser: false,
-	},
 };
 
 export default handle(app);
