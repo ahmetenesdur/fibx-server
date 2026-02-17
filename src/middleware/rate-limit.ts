@@ -16,6 +16,7 @@ export function rateLimit(options: RateLimitOptions) {
 	const store = new Map<string, RateLimitEntry>();
 	const { maxRequests, windowMs, keyFn } = options;
 
+	// Cleanup expired entries every minute
 	const CLEANUP_INTERVAL = 60_000;
 	let lastCleanup = Date.now();
 

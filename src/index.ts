@@ -68,11 +68,21 @@ app.notFound((c) => {
 
 const port = Number(process.env.PORT) || 3001;
 
+// Export the Hono app for serverless environments (Vercel, Cloudflare, etc.)
 export default app;
 
-if (process.env.NODE_ENV !== "production") {
+// explicit start for standalone environments (Docker, VPS) or Development
+// If NODE_ENV is not set, we assume development/local usage and run the server.
+if (
+	!process.env.NODE_ENV ||
+	process.env.NODE_ENV === "production" ||
+	process.env.NODE_ENV === "development"
+) {
 	const { serve } = await import("@hono/node-server");
-	serve({ fetch: app.fetch, port }, (info) => {
-		console.log(`fibx-server running at http://localhost:${info.port}`);
-	});
+
+	if (process.env.VERCEL !== "1") {
+		serve({ fetch: app.fetch, port }, (info) => {
+			console.log(`fibx-server running at http://localhost:${info.port}`);
+		});
+	}
 }

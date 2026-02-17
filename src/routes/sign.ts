@@ -1,9 +1,9 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
 import {
 	signTransactionSchema,
 	signMessageSchema,
 	signTypedDataSchema,
-	validateBody,
 } from "../lib/validation.js";
 import {
 	signTransaction as privySignTx,
@@ -18,8 +18,8 @@ const sign = new Hono<{ Variables: Variables }>();
 
 sign.use("/*", authMiddleware);
 
-sign.post("/transaction", async (c) => {
-	const { walletId, transaction } = await validateBody(c, signTransactionSchema);
+sign.post("/transaction", zValidator("json", signTransactionSchema), async (c) => {
+	const { walletId, transaction } = c.req.valid("json");
 
 	requireWalletOwnership(c, walletId);
 
@@ -27,8 +27,8 @@ sign.post("/transaction", async (c) => {
 	return c.json(result);
 });
 
-sign.post("/message", async (c) => {
-	const { walletId, message } = await validateBody(c, signMessageSchema);
+sign.post("/message", zValidator("json", signMessageSchema), async (c) => {
+	const { walletId, message } = c.req.valid("json");
 
 	requireWalletOwnership(c, walletId);
 
@@ -36,8 +36,8 @@ sign.post("/message", async (c) => {
 	return c.json(result);
 });
 
-sign.post("/typed-data", async (c) => {
-	const { walletId, typedData } = await validateBody(c, signTypedDataSchema);
+sign.post("/typed-data", zValidator("json", signTypedDataSchema), async (c) => {
+	const { walletId, typedData } = c.req.valid("json");
 
 	requireWalletOwnership(c, walletId);
 

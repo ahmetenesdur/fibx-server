@@ -22,7 +22,12 @@ export function errorResponse(error: unknown) {
 		};
 	}
 
-	console.error("[INTERNAL_ERROR]", error);
+	// Log internal errors in production for observability
+	if (error instanceof Error) {
+		console.error("[INTERNAL_ERROR]", error.message, error.stack);
+	} else {
+		console.error("[INTERNAL_ERROR]", error);
+	}
 
 	const message =
 		process.env.NODE_ENV === "production"

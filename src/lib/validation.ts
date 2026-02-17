@@ -35,25 +35,3 @@ export const signTypedDataSchema = z.object({
 	walletId: z.string().min(1, "walletId is required"),
 	typedData: z.record(z.unknown()),
 });
-
-import type { Context } from "hono";
-import { ApiError } from "./errors.js";
-
-export async function validateBody<T extends z.ZodSchema>(
-	c: Context,
-	schema: T
-): Promise<z.infer<T>> {
-	let body: unknown;
-	try {
-		body = await c.req.json();
-	} catch {
-		throw new ApiError(400, "Invalid or missing JSON body", "INVALID_JSON");
-	}
-
-	const parsed = schema.safeParse(body);
-	if (!parsed.success) {
-		throw new ApiError(400, parsed.error.errors[0].message, "VALIDATION_ERROR");
-	}
-
-	return parsed.data;
-}

@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import { loginSchema, verifySchema, validateBody } from "../lib/validation.js";
+import { zValidator } from "@hono/zod-validator";
+import { loginSchema, verifySchema } from "../lib/validation.js";
 import {
 	sendOtp,
 	verifyOtp,
@@ -12,11 +13,11 @@ import { rateLimit } from "../middleware/rate-limit.js";
 
 const auth = new Hono();
 
-// Rate limiting: 5 requests per minute per IP for auth endpoints
+// Rate limit: 5 req/min
 const authRateLimit = rateLimit({ maxRequests: 5, windowMs: 60_000 });
 
-auth.post("/login", authRateLimit, async (c) => {
-	const { email } = await validateBody(c, loginSchema);
+auth.post("/login", authRateLimit, zValidator("json", loginSchema), async (c) => {
+	const { email } = c.req.valid("json");
 
 	await sendOtp(email);
 
@@ -26,8 +27,8 @@ auth.post("/login", authRateLimit, async (c) => {
 	});
 });
 
-auth.post("/verify", authRateLimit, async (c) => {
-	const { email, code } = await validateBody(c, verifySchema);
+auth.post("/verify", authRateLimit, zValidator("json", verifySchema), async (c) => {
+	const { email, code } = c.req.valid("json");
 
 	const { userId } = await verifyOtp(email, code);
 

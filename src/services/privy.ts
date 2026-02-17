@@ -184,6 +184,7 @@ export async function signTypedData(
 	try {
 		const rpcInput = {
 			params: {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				typed_data: typedData as any,
 			},
 		};
