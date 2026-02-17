@@ -45,17 +45,9 @@ export async function validateBody<T extends z.ZodSchema>(
 ): Promise<z.infer<T>> {
 	let body: unknown;
 	try {
-		const rawReq = c.req.raw as any;
-		if (rawReq.body) {
-			body = rawReq.body;
-		} else {
-			body = await c.req.json();
-		}
-	} catch (e: unknown) {
-		const errorMessage = e instanceof Error ? e.message : String(e);
-		// Only log validation/parsing errors, not debug info
-		console.error("[ERROR] Body parsing failed:", e);
-		throw new ApiError(400, `Invalid or missing JSON body (${errorMessage})`, "INVALID_JSON");
+		body = await c.req.json();
+	} catch {
+		throw new ApiError(400, "Invalid or missing JSON body", "INVALID_JSON");
 	}
 
 	const parsed = schema.safeParse(body);
