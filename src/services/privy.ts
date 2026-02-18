@@ -24,6 +24,7 @@ export async function sendOtp(email: string): Promise<void> {
 			"Content-Type": "application/json",
 			Authorization: `Basic ${credentials}`,
 			"privy-app-id": PRIVY_APP_ID,
+			Origin: config.PUBLIC_URL || `http://localhost:${config.PORT}`,
 		},
 		body: JSON.stringify({ email }),
 	});
@@ -48,6 +49,7 @@ export async function verifyOtp(
 			"Content-Type": "application/json",
 			Authorization: `Basic ${credentials}`,
 			"privy-app-id": PRIVY_APP_ID,
+			Origin: config.PUBLIC_URL || `http://localhost:${config.PORT}`,
 		},
 		body: JSON.stringify({ email, code }),
 	});
@@ -184,7 +186,6 @@ export async function signTypedData(
 	try {
 		const rpcInput = {
 			params: {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				typed_data: typedData as any,
 			},
 		};

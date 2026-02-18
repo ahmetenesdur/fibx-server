@@ -31,6 +31,7 @@ pnpm dev
 | `PRIVY_APP_SECRET` | Yes      | Privy application secret        |
 | `JWT_SECRET`       | Yes      | Secret for signing session JWTs |
 | `PORT`             | No       | Server port (default: 3001)     |
+| `PUBLIC_URL`       | No       | Public URL for Origin header    |
 
 ## Security
 

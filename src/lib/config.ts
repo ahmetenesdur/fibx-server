@@ -5,6 +5,7 @@ const envSchema = z.object({
 	PORT: z.coerce.number().default(3001),
 	NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 	ALLOWED_ORIGINS: z.string().optional().default(""),
+	PUBLIC_URL: z.string().optional().default(""),
 
 	// Authentication (Privy)
 	PRIVY_APP_ID: z.string().min(1, "PRIVY_APP_ID is required"),
