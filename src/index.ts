@@ -80,7 +80,7 @@ if (
 ) {
 	const { serve } = await import("@hono/node-server");
 
-	serve({ fetch: app.fetch, port }, (info) => {
+	serve({ fetch: app.fetch, port, hostname: "0.0.0.0" }, (info: { port: number }) => {
 		console.log(`fibx-server running at http://localhost:${info.port}`);
 	});
 }
