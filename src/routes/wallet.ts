@@ -33,7 +33,7 @@ wallet.post("/create", zValidator("json", createWalletSchema), async (c) => {
 	const jwtPayload = c.get("jwtPayload");
 	const userId = jwtPayload.userId;
 
-	const newWallet = await createAgentWallet({ userId });
+	const newWallet = await createAgentWallet();
 
 	await saveWalletIdToUser(userId, newWallet.id);
 

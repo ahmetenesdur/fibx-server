@@ -102,16 +102,11 @@ export async function findExistingWallet(
 	}
 }
 
-export async function createAgentWallet(owner?: {
-	userId?: string;
-}): Promise<{ id: string; address: string }> {
+export async function createAgentWallet(): Promise<{ id: string; address: string }> {
 	const privy = getPrivyClient();
 	try {
-		const walletOwner = owner?.userId ? { user_id: owner.userId } : null;
-
 		const wallet = await privy.wallets().create({
 			chain_type: "ethereum",
-			owner: walletOwner,
 		});
 
 		return { id: wallet.id, address: wallet.address };
@@ -138,6 +133,27 @@ export async function saveWalletIdToUser(userId: string, walletId: string): Prom
 			error: msg,
 		});
 		throw new ApiError(500, "Failed to save wallet metadata", "METADATA_SAVE_FAILED");
+	}
+}
+
+/**
+ * Tests if a wallet can be accessed without user authorization.
+ * Returns false if the wallet requires owner authorization (user-owned wallet).
+ */
+export async function testWalletAccess(walletId: string): Promise<boolean> {
+	const privy = getPrivyClient();
+	try {
+		const rpcInput = { message: "access_check" };
+		await privy.wallets().ethereum().signMessage(walletId, rpcInput);
+		return true;
+	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error);
+		if (msg.includes("authorization") || msg.includes("401")) {
+			return false;
+		}
+		// Other errors (network, etc.) — assume accessible to avoid unnecessary re-provisioning
+		console.warn("[WALLET_ACCESS_CHECK_ERROR]", { walletId, error: msg });
+		return true;
 	}
 }
 

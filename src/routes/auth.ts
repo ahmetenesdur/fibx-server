@@ -7,6 +7,7 @@ import {
 	findExistingWallet,
 	createAgentWallet,
 	saveWalletIdToUser,
+	testWalletAccess,
 } from "../services/privy.js";
 import { generateToken } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rate-limit.js";
@@ -35,8 +36,22 @@ auth.post("/verify", authRateLimit, zValidator("json", verifySchema), async (c) 
 	let wallet = await findExistingWallet(email);
 	let isExisting = true;
 
-	if (!wallet) {
-		wallet = await createAgentWallet({ userId });
+	if (wallet) {
+		// Verify the wallet is accessible (not user-owned requiring authorization)
+		const accessible = await testWalletAccess(wallet.id);
+		if (!accessible) {
+			// Existing wallet is user-owned — create a new app-managed one
+			console.warn("[WALLET_REPROVISION]", {
+				email,
+				oldWalletId: wallet.id,
+				reason: "Wallet requires owner authorization, re-provisioning as app-managed",
+			});
+			wallet = await createAgentWallet();
+			await saveWalletIdToUser(userId, wallet.id);
+			isExisting = false;
+		}
+	} else {
+		wallet = await createAgentWallet();
 		await saveWalletIdToUser(userId, wallet.id);
 		isExisting = false;
 	}
