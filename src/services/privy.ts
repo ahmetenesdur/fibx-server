@@ -157,7 +157,7 @@ export async function signTransaction(
 	} catch (error) {
 		const msg = error instanceof Error ? error.message : String(error);
 		console.error("[SIGN_TX_FAILED]", { walletId, error: msg });
-		throw new ApiError(500, "Transaction signing failed", "SIGN_TX_FAILED");
+		throw new ApiError(500, `Transaction signing failed: ${msg}`, "SIGN_TX_FAILED");
 	}
 }
 
@@ -174,7 +174,7 @@ export async function signMessage(
 	} catch (error) {
 		const msg = error instanceof Error ? error.message : String(error);
 		console.error("[SIGN_MSG_FAILED]", { walletId, error: msg });
-		throw new ApiError(500, "Message signing failed", "SIGN_MSG_FAILED");
+		throw new ApiError(500, `Message signing failed: ${msg}`, "SIGN_MSG_FAILED");
 	}
 }
 
@@ -195,6 +195,6 @@ export async function signTypedData(
 	} catch (error) {
 		const msg = error instanceof Error ? error.message : String(error);
 		console.error("[SIGN_TYPED_DATA_FAILED]", { walletId, error: msg });
-		throw new ApiError(500, "Typed data signing failed", "SIGN_TYPED_DATA_FAILED");
+		throw new ApiError(500, `Typed data signing failed: ${msg}`, "SIGN_TYPED_DATA_FAILED");
 	}
 }
