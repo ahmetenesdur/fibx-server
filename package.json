@@ -1,7 +1,15 @@
 {
 	"name": "fibx-server",
-	"version": "0.1.2",
-	"private": true,
+	"version": "0.1.5",
+	"description": "Server implementation for fibx CLI",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ahmetenesdur/fibx-server.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ahmetenesdur/fibx-server/issues"
+	},
+	"homepage": "https://github.com/ahmetenesdur/fibx-server#readme",
 	"type": "module",
 	"scripts": {
 		"dev": "node --env-file=.env --import tsx/esm --watch src/index.ts",
