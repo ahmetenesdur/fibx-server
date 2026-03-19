@@ -2,6 +2,8 @@
 
 Backend for the [fibx](https://github.com/ahmetenesdur/fibx) CLI. Proxies all Privy operations (OTP auth, wallet management, transaction signing) so the CLI never touches Privy credentials.
 
+Built with [Hono](https://hono.dev) — works standalone (Docker, VPS) or serverless (Vercel, Cloudflare Workers).
+
 ### Wallet Model
 
 Wallets are created as **app-managed** (no owner) — the server controls them via `APP_ID + APP_SECRET`. This is the recommended model for CLI agent wallets.
@@ -12,16 +14,16 @@ Wallets are created as **app-managed** (no owner) — the server controls them v
 
 ## API
 
-| Method | Endpoint            | Auth       | Description                              |
-| ------ | ------------------- | ---------- | ---------------------------------------- |
-| `POST` | `/auth/login`       | —          | Send OTP to email                        |
-| `POST` | `/auth/verify`      | —          | Verify OTP, provision wallet, return JWT |
-| `POST` | `/wallet/find`      | Bearer JWT | Find existing wallet by email            |
-| `POST` | `/wallet/create`    | Bearer JWT | Create new server wallet                 |
-| `POST` | `/sign/transaction` | Bearer JWT | Sign Ethereum transaction                |
-| `POST` | `/sign/message`     | Bearer JWT | Sign a message                           |
-| `POST` | `/sign/typed-data`  | Bearer JWT | Sign EIP-712 typed data                  |
-| `GET`  | `/health`           | —          | Health check                             |
+| Method | Endpoint            | Auth       | Rate Limit | Description                              |
+| ------ | ------------------- | ---------- | ---------- | ---------------------------------------- |
+| `POST` | `/auth/login`       | —          | 5 req/min  | Send OTP to email                        |
+| `POST` | `/auth/verify`      | —          | 5 req/min  | Verify OTP, provision wallet, return JWT |
+| `POST` | `/wallet/find`      | Bearer JWT | —          | Find existing wallet by email            |
+| `POST` | `/wallet/create`    | Bearer JWT | —          | Create new server wallet                 |
+| `POST` | `/sign/transaction` | Bearer JWT | —          | Sign Ethereum transaction                |
+| `POST` | `/sign/message`     | Bearer JWT | —          | Sign a message                           |
+| `POST` | `/sign/typed-data`  | Bearer JWT | —          | Sign EIP-712 typed data                  |
+| `GET`  | `/health`           | —          | —          | Health check                             |
 
 ## Setup
 
@@ -33,14 +35,37 @@ pnpm dev
 
 ## Environment Variables
 
-| Variable           | Required | Description                                    |
-| ------------------ | -------- | ---------------------------------------------- |
-| `PRIVY_APP_ID`     | Yes      | Privy application ID                           |
-| `PRIVY_APP_SECRET` | Yes      | Privy application secret                       |
-| `JWT_SECRET`       | Yes      | Secret for signing session JWTs (min 32 chars) |
-| `PORT`             | No       | Server port (default: 3001)                    |
-| `PUBLIC_URL`       | No       | Public URL for Origin header                   |
-| `ALLOWED_ORIGINS`  | No       | Comma-separated allowed CORS origins           |
+| Variable           | Required | Default       | Description                                    |
+| ------------------ | -------- | ------------- | ---------------------------------------------- |
+| `PRIVY_APP_ID`     | Yes      | —             | Privy application ID                           |
+| `PRIVY_APP_SECRET` | Yes      | —             | Privy application secret                       |
+| `JWT_SECRET`       | Yes      | —             | Secret for signing session JWTs (min 32 chars) |
+| `PORT`             | No       | `3001`        | Server port                                    |
+| `NODE_ENV`         | No       | `development` | `development`, `production`, or `test`         |
+| `PUBLIC_URL`       | No       | —             | Public URL for Origin header in production     |
+| `ALLOWED_ORIGINS`  | No       | —             | Comma-separated allowed CORS origins           |
+
+## Deployment
+
+### Standalone (Docker, VPS)
+
+The server starts automatically via `@hono/node-server` when `NODE_ENV` is `development` or `production`:
+
+```bash
+pnpm build
+node dist/src/index.js
+```
+
+### Serverless (Vercel, Cloudflare Workers)
+
+The Hono app is exported as the default module:
+
+```typescript
+import app from "./src/index.js";
+export default app;
+```
+
+Use your platform's Hono adapter accordingly.
 
 ## Security
 
@@ -48,7 +73,7 @@ pnpm dev
 
 - All wallet/signing endpoints require a valid JWT (HS256, 7-day expiry)
 - Signing endpoints verify wallet ownership — users can only sign with their own wallet (`requireWalletOwnership`)
-- Auth endpoints are rate-limited (5 req/min)
+- Auth endpoints are rate-limited (5 req/min per IP)
 
 ### Credential Protection
 
@@ -61,3 +86,7 @@ pnpm dev
 - Private keys are managed by Privy's TEE (Trusted Execution Environment) with MPC key sharding
 - Neither the server nor the CLI ever sees a private key
 - Keys are temporarily reconstructed inside the TEE only during signing, then immediately re-sharded
+
+## License
+
+[MIT](https://opensource.org/licenses/MIT)

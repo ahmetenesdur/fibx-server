@@ -40,7 +40,7 @@ app.route("/sign", signRoutes);
 app.get("/", (c) => {
 	return c.json({
 		name: "fibx-server",
-		version: "0.1.0",
+		version: "0.1.5",
 		status: "ok",
 	});
 });
