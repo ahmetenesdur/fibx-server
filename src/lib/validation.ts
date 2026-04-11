@@ -23,15 +23,15 @@ export const createWalletSchema = z.object({
 
 export const signTransactionSchema = z.object({
 	walletId: z.string().min(1, "walletId is required"),
-	transaction: z.record(z.unknown()),
+	transaction: z.record(z.string(), z.unknown()),
 });
 
 export const signMessageSchema = z.object({
 	walletId: z.string().min(1, "walletId is required"),
-	message: z.union([z.string().min(1), z.record(z.unknown())]),
+	message: z.union([z.string().min(1), z.record(z.string(), z.unknown())]),
 });
 
 export const signTypedDataSchema = z.object({
 	walletId: z.string().min(1, "walletId is required"),
-	typedData: z.record(z.unknown()),
+	typedData: z.record(z.string(), z.unknown()),
 });

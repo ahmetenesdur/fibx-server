@@ -69,11 +69,17 @@ Use your platform's Hono adapter accordingly.
 
 ## Security
 
+### Rate Limiting
+
+- Auth endpoints are rate-limited (5 req/min per IP via `CF-Connecting-IP` or `X-Forwarded-For`)
+- In-memory rate limiter with ordered-Map cleanup (O(k) where k = expired entries)
+- `maxStoreSize` cap (10,000 entries) with LRU eviction to prevent memory exhaustion
+- Standard `X-RateLimit-*` and `Retry-After` headers on all rate-limited responses
+
 ### Access Control
 
 - All wallet/signing endpoints require a valid JWT (HS256, 7-day expiry)
 - Signing endpoints verify wallet ownership — users can only sign with their own wallet (`requireWalletOwnership`)
-- Auth endpoints are rate-limited (5 req/min per IP)
 
 ### Credential Protection
 

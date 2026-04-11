@@ -5,6 +5,11 @@ import { bodyLimit } from "hono/body-limit";
 import { secureHeaders } from "hono/secure-headers";
 import { requestId } from "hono/request-id";
 import { errorResponse } from "./lib/errors.js";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const pkg = require("../package.json") as { version: string };
+
 import authRoutes from "./routes/auth.js";
 import walletRoutes from "./routes/wallet.js";
 import signRoutes from "./routes/sign.js";
@@ -40,7 +45,7 @@ app.route("/sign", signRoutes);
 app.get("/", (c) => {
 	return c.json({
 		name: "fibx-server",
-		version: "0.1.5",
+		version: pkg.version,
 		status: "ok",
 	});
 });
