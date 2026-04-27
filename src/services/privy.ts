@@ -203,7 +203,7 @@ export async function signTypedData(
 		const rpcInput = {
 			params: {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Privy SDK TypedData type is stricter than our generic Record<string, unknown> input
-			typed_data: typedData as any,
+				typed_data: typedData as any,
 			},
 		};
 
