@@ -52,6 +52,8 @@ pnpm dev
 | `ALLOWED_ORIGINS`   | No       | —                    | Comma-separated allowed CORS origins               |
 | `TRUST_PROXY_HOPS`  | No       | `1`                  | Reverse proxies in front (see below)               |
 | `ALLOWED_CHAIN_IDS` | No       | `8453,4114,999,143`  | Chain IDs this deployment will sign for            |
+| `WALLET_POLICY_ID`  | No       | —                    | Privy policy attached to new agent wallets         |
+| `WALLET_POLICY_MAX_TX_NATIVE` | No | `8453:0.5,4114:0.005,999:25,143:500` | Per-tx native value caps per chain |
 
 **`TRUST_PROXY_HOPS`** controls how the rate limiter identifies a client.
 Forwarding headers are client-writable, and each proxy *appends* the address it
@@ -64,6 +66,25 @@ is used). Setting it too high lets a client forge its own bucket key.
 **`ALLOWED_CHAIN_IDS`** bounds the signing oracle: `/sign/transaction` and
 `/sign/typed-data` reject payloads targeting any other chain, so a stolen token
 cannot be used to sign on an unrelated network.
+
+## Wallet Policy (Privy signing layer)
+
+Every agent wallet is created with a [Privy policy](https://docs.privy.io/controls/policies/overview)
+attached. Privy policies are default-deny and enforced inside Privy's TEE at
+signing time, so these limits hold **even if this server is fully compromised**:
+
+- Transactions are only signed for the chains in the policy, each under its
+  per-transaction native value cap (`WALLET_POLICY_MAX_TX_NATIVE`).
+- Private key export is explicitly denied.
+- Message signing and typed-data signing stay enabled (the login flow's
+  signMessage probe depends on it).
+
+On first wallet creation with no `WALLET_POLICY_ID` set, the server creates the
+policy and logs its id — pin it via `WALLET_POLICY_ID` afterwards. Policy
+changes (e.g. new caps) require creating a new policy; existing wallets keep
+the policy they were created with. Note the caps apply to native value only;
+ERC-20 amounts live in calldata and are bounded by the server's schema layer
+instead.
 
 ## Deployment
 

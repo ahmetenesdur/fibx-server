@@ -1,5 +1,6 @@
 import { PrivyClient } from "@privy-io/node";
 import { ApiError } from "../lib/errors.js";
+import { ensureWalletPolicy } from "./policy.js";
 import { config } from "../lib/config.js";
 
 let privyInstance: PrivyClient | null = null;
@@ -130,9 +131,16 @@ export async function getWalletById(
 
 export async function createAgentWallet(): Promise<{ id: string; address: string }> {
 	const privy = getPrivyClient();
+
+	// Resolved before creation so a wallet is never provisioned unguarded —
+	// the policy enforces chain and value caps at Privy's signing layer even
+	// if this server is later compromised.
+	const policyId = await ensureWalletPolicy();
+
 	try {
 		const wallet = await privy.wallets().create({
 			chain_type: "ethereum",
+			policy_ids: [policyId],
 		});
 
 		return { id: wallet.id, address: wallet.address };

@@ -23,6 +23,23 @@ const envSchema = z.object({
 	 */
 	ALLOWED_CHAIN_IDS: z.string().default("8453,4114,999,143"),
 
+	/**
+	 * Privy policy attached to newly created agent wallets. Leave unset to have
+	 * the server create one on first wallet creation (its id is logged — pin it
+	 * here afterwards so restarts reuse it instead of creating duplicates).
+	 */
+	WALLET_POLICY_ID: z.string().optional(),
+
+	/**
+	 * Per-transaction native value caps enforced by the Privy policy, as
+	 * "chainId:amountInNativeUnits" pairs. Defaults are deliberately
+	 * conservative; adjust to your risk appetite. Applies only to wallets
+	 * created after the policy exists.
+	 */
+	WALLET_POLICY_MAX_TX_NATIVE: z
+		.string()
+		.default("8453:0.5,4114:0.005,999:25,143:500"),
+
 	// Authentication (Privy)
 	PRIVY_APP_ID: z.string().min(1, "PRIVY_APP_ID is required"),
 	PRIVY_APP_SECRET: z.string().min(1, "PRIVY_APP_SECRET is required"),
