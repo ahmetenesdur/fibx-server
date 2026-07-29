@@ -1,6 +1,8 @@
 import type { Context, Next } from "hono";
 import { createMiddleware } from "hono/factory";
+import { getConnInfo } from "@hono/node-server/conninfo";
 import { ApiError } from "../lib/errors.js";
+import { config } from "../lib/config.js";
 
 interface RateLimitEntry {
 	count: number;
@@ -121,12 +123,40 @@ export function rateLimit(options: RateLimitOptions) {
 	});
 }
 
-// Extract the most likely real client IP from common proxy headers
+/**
+ * Resolve the client IP used as the rate-limit bucket key.
+ *
+ * Forwarding headers are client-writable, so they are only trusted as far as
+ * TRUST_PROXY_HOPS says. Each proxy APPENDS the address it saw, so with one
+ * proxy in front the real client is the last X-Forwarded-For entry, not the
+ * first — a client that sends its own X-Forwarded-For only prepends to the
+ * chain. Reading the first entry (as this used to) let anyone mint a fresh
+ * bucket per request and walk straight past the OTP limits.
+ *
+ * With TRUST_PROXY_HOPS=0 the service is assumed to be directly exposed and
+ * no forwarding header is believed at all.
+ */
 function getClientIp(c: Context): string {
-	return (
-		c.req.header("CF-Connecting-IP") ??
-		c.req.header("X-Forwarded-For")?.split(",")[0]?.trim() ??
-		c.req.header("X-Real-IP") ??
-		"unknown"
-	);
+	const hops = config.TRUST_PROXY_HOPS;
+
+	if (hops > 0) {
+		const forwarded = c.req
+			.header("X-Forwarded-For")
+			?.split(",")
+			.map((v) => v.trim())
+			.filter(Boolean);
+
+		if (forwarded?.length) {
+			// Count in from the right: the rightmost entry is the one our own
+			// proxy observed, so it is the least forgeable.
+			const index = Math.max(0, forwarded.length - hops);
+			const ip = forwarded[index];
+			if (ip) return ip;
+		}
+
+		const single = c.req.header("CF-Connecting-IP") ?? c.req.header("X-Real-IP");
+		if (single) return single;
+	}
+
+	return getConnInfo(c).remote.address ?? "unknown";
 }

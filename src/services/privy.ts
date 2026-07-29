@@ -102,6 +102,32 @@ export async function findExistingWallet(
 	}
 }
 
+/**
+ * Resolves a wallet straight from its id. /wallet/create uses this to confirm
+ * the wallet named by the caller's JWT still exists before deciding whether a
+ * new one is warranted — that claim is also what /sign/* enforces, so it is the
+ * authoritative identifier for the session.
+ *
+ * Deliberately not looking the user up by id: the SDK only exposes that via
+ * `users._get()`, a private method that can change between minor releases.
+ */
+export async function getWalletById(
+	walletId: string
+): Promise<{ id: string; address: string } | null> {
+	const privy = getPrivyClient();
+	try {
+		const wallet = await privy.wallets().get(walletId);
+		return { id: wallet.id, address: wallet.address };
+	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error);
+		if (msg.includes("not found") || msg.includes("404")) {
+			return null;
+		}
+		console.error("[GET_WALLET_ERROR]", { walletId, error: msg });
+		throw new ApiError(500, "Failed to look up wallet", "WALLET_LOOKUP_FAILED");
+	}
+}
+
 export async function createAgentWallet(): Promise<{ id: string; address: string }> {
 	const privy = getPrivyClient();
 	try {

@@ -19,11 +19,17 @@ Wallets are created as **app-managed** (no owner) — the server controls them v
 | `POST` | `/auth/login`       | —          | 5 req/min  | Send OTP to email                        |
 | `POST` | `/auth/verify`      | —          | 5 req/min  | Verify OTP, provision wallet, return JWT |
 | `POST` | `/wallet/find`      | Bearer JWT | —          | Find existing wallet by email            |
-| `POST` | `/wallet/create`    | Bearer JWT | —          | Create new server wallet                 |
+| `POST` | `/wallet/create`    | Bearer JWT | 5 req/min  | Get or provision the caller's wallet     |
 | `POST` | `/sign/transaction` | Bearer JWT | —          | Sign Ethereum transaction                |
 | `POST` | `/sign/message`     | Bearer JWT | —          | Sign a message                           |
 | `POST` | `/sign/typed-data`  | Bearer JWT | —          | Sign EIP-712 typed data                  |
 | `GET`  | `/health`           | —          | —          | Health check                             |
+
+> `/wallet/create` is idempotent: it returns the wallet named by the caller's
+> JWT when that wallet still exists. It only provisions a new one when the
+> mapped wallet is gone, and in that case the response also carries a refreshed
+> `token`, because `server_wallet_id` has been repointed and the caller's old
+> JWT would no longer pass the `/sign/*` ownership check.
 
 ## Setup
 
@@ -35,15 +41,29 @@ pnpm dev
 
 ## Environment Variables
 
-| Variable           | Required | Default       | Description                                    |
-| ------------------ | -------- | ------------- | ---------------------------------------------- |
-| `PRIVY_APP_ID`     | Yes      | —             | Privy application ID                           |
-| `PRIVY_APP_SECRET` | Yes      | —             | Privy application secret                       |
-| `JWT_SECRET`       | Yes      | —             | Secret for signing session JWTs (min 32 chars) |
-| `PORT`             | No       | `3001`        | Server port                                    |
-| `NODE_ENV`         | No       | `development` | `development`, `production`, or `test`         |
-| `PUBLIC_URL`       | No       | —             | Public URL for Origin header in production     |
-| `ALLOWED_ORIGINS`  | No       | —             | Comma-separated allowed CORS origins           |
+| Variable            | Required | Default              | Description                                        |
+| ------------------- | -------- | -------------------- | -------------------------------------------------- |
+| `PRIVY_APP_ID`      | Yes      | —                    | Privy application ID                               |
+| `PRIVY_APP_SECRET`  | Yes      | —                    | Privy application secret                           |
+| `JWT_SECRET`        | Yes      | —                    | Secret for signing session JWTs (min 32 chars)     |
+| `PORT`              | No       | `3001`               | Server port                                        |
+| `NODE_ENV`          | No       | `development`        | `development`, `production`, or `test`             |
+| `PUBLIC_URL`        | No       | —                    | Public URL for Origin header in production         |
+| `ALLOWED_ORIGINS`   | No       | —                    | Comma-separated allowed CORS origins               |
+| `TRUST_PROXY_HOPS`  | No       | `1`                  | Reverse proxies in front (see below)               |
+| `ALLOWED_CHAIN_IDS` | No       | `8453,4114,999,143`  | Chain IDs this deployment will sign for            |
+
+**`TRUST_PROXY_HOPS`** controls how the rate limiter identifies a client.
+Forwarding headers are client-writable, and each proxy *appends* the address it
+saw, so the limiter counts this many entries in from the right of
+`X-Forwarded-For`. Set it to the number of proxies actually in front of the
+service — `1` behind App Runner or a single load balancer, `0` when the service
+is directly exposed (then no forwarding header is trusted and the socket address
+is used). Setting it too high lets a client forge its own bucket key.
+
+**`ALLOWED_CHAIN_IDS`** bounds the signing oracle: `/sign/transaction` and
+`/sign/typed-data` reject payloads targeting any other chain, so a stolen token
+cannot be used to sign on an unrelated network.
 
 ## Deployment
 

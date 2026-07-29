@@ -5,6 +5,7 @@ import { bodyLimit } from "hono/body-limit";
 import { secureHeaders } from "hono/secure-headers";
 import { requestId } from "hono/request-id";
 import { errorResponse } from "./lib/errors.js";
+import { config } from "./lib/config.js";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -21,8 +22,12 @@ app.use("*", logger());
 app.use("*", secureHeaders());
 app.use("*", bodyLimit({ maxSize: 1024 * 1024 }));
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-	? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+// Read via the validated config rather than process.env so every env access
+// goes through one schema.
+const allowedOrigins = config.ALLOWED_ORIGINS
+	? config.ALLOWED_ORIGINS.split(",")
+			.map((o) => o.trim())
+			.filter(Boolean)
 	: [];
 
 app.use(

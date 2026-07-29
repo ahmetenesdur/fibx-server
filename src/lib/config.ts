@@ -7,6 +7,22 @@ const envSchema = z.object({
 	ALLOWED_ORIGINS: z.string().optional().default(""),
 	PUBLIC_URL: z.string().optional().default(""),
 
+	/**
+	 * Number of reverse proxies in front of this service. Rate limiting counts
+	 * this many entries in from the right of X-Forwarded-For to find the real
+	 * client. Set 0 when the service is directly exposed, so no client-supplied
+	 * forwarding header is trusted. Default 1 matches the documented App Runner
+	 * deployment.
+	 */
+	TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(10).default(1),
+
+	/**
+	 * Chain IDs this deployment will sign for, comma separated. Defaults to the
+	 * four chains the fibx CLI supports (Base, Citrea, HyperEVM, Monad) so a
+	 * stolen token cannot be used to sign on an unrelated chain.
+	 */
+	ALLOWED_CHAIN_IDS: z.string().default("8453,4114,999,143"),
+
 	// Authentication (Privy)
 	PRIVY_APP_ID: z.string().min(1, "PRIVY_APP_ID is required"),
 	PRIVY_APP_SECRET: z.string().min(1, "PRIVY_APP_SECRET is required"),
