@@ -9,8 +9,13 @@ Built with [Hono](https://hono.dev) — works standalone (Docker, VPS) or server
 Wallets are created as **app-managed** (no owner) — the server controls them via `APP_ID + APP_SECRET`. This is the recommended model for CLI agent wallets.
 
 - Private keys never leave Privy's Trusted Execution Environment (TEE)
+- Every wallet is created with a [signing policy](#wallet-policy-privy-signing-layer) that caps what it can sign
 - User-to-wallet mapping is tracked via Privy `custom_metadata.server_wallet_id`
 - On login, if an existing wallet requires owner authorization (legacy user-owned wallet), it is automatically re-provisioned as app-managed
+
+Because the app secret alone authorizes signing, it is the single most sensitive
+credential here — and the reason the wallet policy matters: it is the one limit
+that still holds if this server is compromised.
 
 ## API
 
@@ -41,22 +46,22 @@ pnpm dev
 
 ## Environment Variables
 
-| Variable            | Required | Default              | Description                                        |
-| ------------------- | -------- | -------------------- | -------------------------------------------------- |
-| `PRIVY_APP_ID`      | Yes      | —                    | Privy application ID                               |
-| `PRIVY_APP_SECRET`  | Yes      | —                    | Privy application secret                           |
-| `JWT_SECRET`        | Yes      | —                    | Secret for signing session JWTs (min 32 chars)     |
-| `PORT`              | No       | `3001`               | Server port                                        |
-| `NODE_ENV`          | No       | `development`        | `development`, `production`, or `test`             |
-| `PUBLIC_URL`        | No       | —                    | Public URL for Origin header in production         |
-| `ALLOWED_ORIGINS`   | No       | —                    | Comma-separated allowed CORS origins               |
-| `TRUST_PROXY_HOPS`  | No       | `1`                  | Reverse proxies in front (see below)               |
-| `ALLOWED_CHAIN_IDS` | No       | `8453,4114,999,143`  | Chain IDs this deployment will sign for            |
-| `WALLET_POLICY_ID`  | No       | —                    | Privy policy attached to new agent wallets         |
-| `WALLET_POLICY_MAX_TX_NATIVE` | No | `8453:0.5,4114:0.005,999:25,143:500` | Per-tx native value caps per chain |
+| Variable                      | Required | Default                              | Description                                    |
+| ----------------------------- | -------- | ------------------------------------ | ---------------------------------------------- |
+| `PRIVY_APP_ID`                | Yes      | —                                    | Privy application ID                           |
+| `PRIVY_APP_SECRET`            | Yes      | —                                    | Privy application secret                       |
+| `JWT_SECRET`                  | Yes      | —                                    | Secret for signing session JWTs (min 32 chars) |
+| `PORT`                        | No       | `3001`                               | Server port                                    |
+| `NODE_ENV`                    | No       | `development`                        | `development`, `production`, or `test`         |
+| `PUBLIC_URL`                  | No       | —                                    | Public URL for Origin header in production     |
+| `ALLOWED_ORIGINS`             | No       | —                                    | Comma-separated allowed CORS origins           |
+| `TRUST_PROXY_HOPS`            | No       | `1`                                  | Reverse proxies in front (see below)           |
+| `ALLOWED_CHAIN_IDS`           | No       | `8453,4114,999,143`                  | Chain IDs this deployment will sign for        |
+| `WALLET_POLICY_ID`            | No       | —                                    | Privy policy attached to new agent wallets     |
+| `WALLET_POLICY_MAX_TX_NATIVE` | No       | `8453:0.5,4114:0.005,999:25,143:500` | Per-tx native value caps per chain             |
 
 **`TRUST_PROXY_HOPS`** controls how the rate limiter identifies a client.
-Forwarding headers are client-writable, and each proxy *appends* the address it
+Forwarding headers are client-writable, and each proxy _appends_ the address it
 saw, so the limiter counts this many entries in from the right of
 `X-Forwarded-For`. Set it to the number of proxies actually in front of the
 service — `1` behind App Runner or a single load balancer, `0` when the service
@@ -112,15 +117,21 @@ Use your platform's Hono adapter accordingly.
 
 ### Rate Limiting
 
-- Auth endpoints are rate-limited (5 req/min per IP via `CF-Connecting-IP` or `X-Forwarded-For`)
+- Auth and wallet-provisioning endpoints are rate-limited (5 req/min per client)
+- The client is identified by counting `TRUST_PROXY_HOPS` entries in from the right of `X-Forwarded-For`, so a client cannot forge a fresh bucket by sending its own header
 - In-memory rate limiter with ordered-Map cleanup (O(k) where k = expired entries)
 - `maxStoreSize` cap (10,000 entries) with LRU eviction to prevent memory exhaustion
 - Standard `X-RateLimit-*` and `Retry-After` headers on all rate-limited responses
+
+> The limiter is per instance. Running multiple instances multiplies the
+> effective limit; a shared store would be needed for strict global limits.
 
 ### Access Control
 
 - All wallet/signing endpoints require a valid JWT (HS256, 7-day expiry)
 - Signing endpoints verify wallet ownership — users can only sign with their own wallet (`requireWalletOwnership`)
+- `/sign/*` payloads are validated against strict schemas: unknown fields, contract creation, and chains outside `ALLOWED_CHAIN_IDS` are rejected before reaching Privy
+- Beyond that, the [wallet policy](#wallet-policy-privy-signing-layer) enforces value caps inside Privy itself
 
 ### Credential Protection
 
@@ -133,6 +144,23 @@ Use your platform's Hono adapter accordingly.
 - Private keys are managed by Privy's TEE (Trusted Execution Environment) with MPC key sharding
 - Neither the server nor the CLI ever sees a private key
 - Keys are temporarily reconstructed inside the TEE only during signing, then immediately re-sharded
+
+## Development
+
+```bash
+pnpm install
+pnpm dev          # watch mode, loads .env
+pnpm test         # vitest unit tests
+pnpm typecheck    # tsc --noEmit
+pnpm lint         # eslint
+pnpm build        # tsc to dist/
+```
+
+## Related
+
+- [fibx](https://github.com/ahmetenesdur/fibx) — the CLI and MCP server this backend serves
+- [fibx-telegram-bot](https://github.com/ahmetenesdur/fibx-telegram-bot) — Telegram interface
+- [fibx-skills](https://github.com/Fibrous-Finance/fibx-skills) — Agent Skills
 
 ## License
 
