@@ -11,11 +11,18 @@ import { ApiError } from "../lib/errors.js";
  * therefore have an explicit ALLOW rule here — omitting personal_sign, for
  * example, would break the signMessage access probe that runs on every login.
  *
- * What this policy enforces at the signing layer (independent of fibx-server's
- * own zod validation, and still standing even if the server is compromised):
- *  - transactions only on the chains this deployment serves
- *  - a per-transaction native-value cap, configured per chain
- *  - private key export permanently denied
+ * Privy evaluates the attached rules at signing time. The generated
+ * eth_signTransaction rules constrain the transaction's chain_id and top-level
+ * native value. They do not inspect ERC-20 amounts or arbitrary calldata.
+ * personal_sign and eth_signTypedData_v4 are allowed without policy-side
+ * content conditions, so those paths depend on fibx-server's authentication
+ * and validation.
+ *
+ * The explicit exportPrivateKey DENY is a rule in the currently generated
+ * policy, not a permanent guarantee. The server and its app credentials are
+ * also the policy-administration trust boundary, so this policy is
+ * defense-in-depth rather than containment after full administrative
+ * compromise.
  */
 
 /** The SDK exports policy params only through the service's input type. */
@@ -107,7 +114,8 @@ export function buildPolicyRules(caps: ChainCap[]): PolicyRules {
 			action: "ALLOW" as const,
 			conditions: [],
 		},
-		// Explicit for readers; default-deny would block it anyway.
+		// Explicit in the generated policy for readers; this is a current rule,
+		// not an immutable guarantee.
 		{
 			name: "deny-key-export",
 			method: "exportPrivateKey" as const,
@@ -122,10 +130,12 @@ let cachedPolicyId: string | null = null;
 /**
  * Resolves the policy to attach to new agent wallets.
  *
- * If WALLET_POLICY_ID is set it is verified once and used. Otherwise a policy
- * is created on first need and its id logged loudly — the operator should pin
- * it via WALLET_POLICY_ID so restarts do not accumulate duplicate policies
- * (Privy has no list-policies API to find one by name).
+ * If WALLET_POLICY_ID is set it is fetched once to verify that the id exists,
+ * then used as-is. Its rules are not compared with buildPolicyRules, so the
+ * operator remains responsible for auditing that policy. Otherwise a policy is
+ * created on first need and its id logged loudly — the operator should pin it
+ * via WALLET_POLICY_ID so restarts do not accumulate duplicate policies (Privy
+ * has no list-policies API to find one by name).
  */
 export async function ensureWalletPolicy(): Promise<string> {
 	if (cachedPolicyId) return cachedPolicyId;

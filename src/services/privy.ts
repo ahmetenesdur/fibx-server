@@ -132,9 +132,9 @@ export async function getWalletById(
 export async function createAgentWallet(): Promise<{ id: string; address: string }> {
 	const privy = getPrivyClient();
 
-	// Resolved before creation so a wallet is never provisioned unguarded —
-	// the policy enforces chain and value caps at Privy's signing layer even
-	// if this server is later compromised.
+	// Resolve the policy before creation so the wallet is attached to one from
+	// the start. The attached rules are evaluated at signing time, but the app
+	// credentials remain the wallet/policy administration trust boundary.
 	const policyId = await ensureWalletPolicy();
 
 	try {

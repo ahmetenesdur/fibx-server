@@ -27,6 +27,8 @@ const envSchema = z.object({
 	 * Privy policy attached to newly created agent wallets. Leave unset to have
 	 * the server create one on first wallet creation (its id is logged — pin it
 	 * here afterwards so restarts reuse it instead of creating duplicates).
+	 * A configured id is fetched to confirm it exists; its rules are not
+	 * compared with the rules this server would generate.
 	 */
 	WALLET_POLICY_ID: z.string().optional(),
 
