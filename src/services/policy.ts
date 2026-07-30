@@ -137,7 +137,10 @@ export async function ensureWalletPolicy(): Promise<string> {
 			await privy.policies().get(config.WALLET_POLICY_ID);
 		} catch (error) {
 			const msg = error instanceof Error ? error.message : String(error);
-			console.error("[POLICY_VERIFY_FAILED]", { policyId: config.WALLET_POLICY_ID, error: msg });
+			console.error("[POLICY_VERIFY_FAILED]", {
+				policyId: config.WALLET_POLICY_ID,
+				error: msg,
+			});
 			throw new ApiError(
 				500,
 				"Configured WALLET_POLICY_ID could not be verified with Privy",

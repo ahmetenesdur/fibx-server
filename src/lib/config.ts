@@ -36,9 +36,7 @@ const envSchema = z.object({
 	 * conservative; adjust to your risk appetite. Applies only to wallets
 	 * created after the policy exists.
 	 */
-	WALLET_POLICY_MAX_TX_NATIVE: z
-		.string()
-		.default("8453:0.5,4114:0.005,999:25,143:500"),
+	WALLET_POLICY_MAX_TX_NATIVE: z.string().default("8453:0.5,4114:0.005,999:25,143:500"),
 
 	// Authentication (Privy)
 	PRIVY_APP_ID: z.string().min(1, "PRIVY_APP_ID is required"),

@@ -1,6 +1,6 @@
 # fibx-server
 
-Backend for the [fibx](https://github.com/ahmetenesdur/fibx) CLI. Proxies all Privy operations (OTP auth, wallet management, transaction signing) so the CLI never touches Privy credentials.
+Backend for the [fibx](https://github.com/Fibrous-Finance/fibx) CLI. Proxies all Privy operations (OTP auth, wallet management, transaction signing) so the CLI never touches Privy credentials.
 
 Built with [Hono](https://hono.dev) — works standalone (Docker, VPS) or serverless (Vercel, Cloudflare Workers).
 
@@ -158,8 +158,8 @@ pnpm build        # tsc to dist/
 
 ## Related
 
-- [fibx](https://github.com/ahmetenesdur/fibx) — the CLI and MCP server this backend serves
-- [fibx-telegram-bot](https://github.com/ahmetenesdur/fibx-telegram-bot) — Telegram interface
+- [fibx](https://github.com/Fibrous-Finance/fibx) — the CLI and MCP server this backend serves
+- [fibx-telegram-bot](https://github.com/Fibrous-Finance/fibx-telegram-bot) — Telegram interface
 - [fibx-skills](https://github.com/Fibrous-Finance/fibx-skills) — Agent Skills
 
 ## License

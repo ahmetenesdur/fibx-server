@@ -4,12 +4,12 @@
 	"description": "Server implementation for fibx CLI",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/ahmetenesdur/fibx-server.git"
+		"url": "git+https://github.com/Fibrous-Finance/fibx-server.git"
 	},
 	"bugs": {
-		"url": "https://github.com/ahmetenesdur/fibx-server/issues"
+		"url": "https://github.com/Fibrous-Finance/fibx-server/issues"
 	},
-	"homepage": "https://github.com/ahmetenesdur/fibx-server#readme",
+	"homepage": "https://github.com/Fibrous-Finance/fibx-server#readme",
 	"type": "module",
 	"scripts": {
 		"dev": "node --env-file=.env --import tsx/esm --watch src/index.ts",
